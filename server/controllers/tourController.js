@@ -50,11 +50,11 @@ const addNewTour = async (req, res, next) => {
       },
     });
   } catch (error) {
-    // res.status(400).json({
-    //   status: "Fail",
-    //   error: error.message,
-    // });
-    next(new AppError(error.message, 400));
+    res.status(400).json({
+      status: "Fail",
+      error: error.message,
+    });
+    // next(new AppError(error.message, 400));
   }
 };
 
@@ -71,11 +71,11 @@ const getTour = async (req, res, next) => {
       data: {tour},
     });
   } catch (error) {
-    next(error);
-    // res.status(400).json({
-    //   status: "Fail",
-    //   error: error,
-    // });
+    // next(error);
+    res.status(400).json({
+      status: "Fail",
+      error: error,
+    });
   }
 };
 
