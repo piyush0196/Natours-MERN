@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Pasword is required"],
     minLenght: [8, "Password must be atleast 8 chars"],
+    select: false,
   },
   confirmPassword: {
     type: String,
@@ -32,6 +33,7 @@ const userSchema = new mongoose.Schema({
       message: "Password must be same",
     },
   },
+  passwordChangedAt: Date,
 });
 
 //DOCUMENT MIDDLEWARE: runs only before .save() and .create()
@@ -47,6 +49,28 @@ userSchema.pre("save", async function (next) {
 
   next();
 });
+
+// Instance method => Available for all user documents
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.changePasswordAfter = function (JwtTimestamp) {
+  const changedTimestamp = parseInt(
+    this.passwordChangedAt.getTime() / 1000,
+    10
+  ); // in sec
+
+  if (this.passwordChangedAt) {
+    return JwtTimestamp < changedTimestamp;
+  }
+
+  // False means password NEVER changed by user
+  return false;
+};
 
 const User = new mongoose.model("User", userSchema);
 

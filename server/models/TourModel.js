@@ -103,7 +103,7 @@ tourSchema.pre("save", function (next) {
 });
 
 tourSchema.post("save", function (doc, next) {
-  console.log(doc);
+  // console.log(doc);
   next();
 });
 
@@ -115,7 +115,7 @@ tourSchema.pre(/^find/, function (next) {
 });
 
 tourSchema.post(/^find/, function (docs, next) {
-  console.log(docs);
+  // console.log(docs);
   next();
 });
 

@@ -12,8 +12,6 @@ const app = require("./app");
 
 const DB = process.env.DATABASE.replace("<password>", process.env.DB_PASSWORD);
 
-console.log(process.env.NODE_ENV);
-
 mongoose
   .connect(DB, {
     // useNewUrlParser: true,
