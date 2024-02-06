@@ -18,13 +18,17 @@ router.route("/monthly-plan/:year").get(tourController.getMonthlyPlan);
 
 router
   .route("/")
-  .get(authController.protect, tourController.getAllTours)
+  .get(authController.authenticate, tourController.getAllTours)
   .post(tourController.addNewTour);
 
 router
   .route("/:id")
   .get(tourController.getTour)
   .patch(tourController.updateTour)
-  .delete(tourController.deleteTour);
+  .delete(
+    authController.authenticate,
+    authController.restrictTo("admin", "lead-guide"),
+    tourController.deleteTour
+  );
 
 module.exports = router;

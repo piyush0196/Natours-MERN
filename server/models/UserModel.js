@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
@@ -33,7 +34,19 @@ const userSchema = new mongoose.Schema({
       message: "Password must be same",
     },
   },
+  role: {
+    type: String,
+    enum: ["user", "guide", "lead-guide", "admin"],
+    default: "user",
+  },
   passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 //DOCUMENT MIDDLEWARE: runs only before .save() and .create()
@@ -47,6 +60,13 @@ userSchema.pre("save", async function (next) {
   // 2) Delete confirmPassword (don't want to save it in DB)
   this.confirmPassword = undefined;
 
+  next();
+});
+
+// QUERY MIDDLEWARE
+userSchema.pre(/^find/, function (next) {
+  // this points to current query
+  this.find({active: {$ne: false}});
   next();
 });
 
@@ -64,12 +84,28 @@ userSchema.methods.changePasswordAfter = function (JwtTimestamp) {
     10
   ); // in sec
 
+  // this point to document
   if (this.passwordChangedAt) {
+    // true => Password is changed by the user
     return JwtTimestamp < changedTimestamp;
   }
 
   // False means password NEVER changed by user
   return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // encrypting to store in DB
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // now + 10 mins in ms
+
+  return resetToken;
 };
 
 const User = new mongoose.model("User", userSchema);
