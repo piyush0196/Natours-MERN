@@ -7,14 +7,28 @@ const sendEmail = require("./../utils/email");
 const bcrypt = require("bcryptjs");
 const {urlencoded} = require("body-parser");
 
+// ROLE - Create a new Token
 const signToken = (id) => {
   return jwt.sign({id}, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES,
   });
 };
 
+// ROLE - To send user & token in response
 const createAndSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
+
+  const cookieOption = {
+    expiresIn: process.env.JWT_COOKIE_EXPIRES * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === "production") cookieOption.secure = true;
+  //sending JWT in cookie
+  res.cookie("jwt", token, cookieOption);
+
+  // Remove password from output
+  user.password = undefined;
 
   res.status(statusCode).json({
     status: "Success",
@@ -25,6 +39,7 @@ const createAndSendToken = (user, statusCode, res) => {
 
 exports.signup = async (req, res, next) => {
   try {
+    // Adding new user in DB
     const newUser = await User.create({
       name: req.body.name,
       email: req.body.email,
@@ -60,8 +75,7 @@ exports.login = async (req, res, next) => {
   createAndSendToken(user, 200, res);
 };
 
-//AUTHENTICATE
-
+// ROLE - Check if user is AUTHENTICATED
 exports.authenticate = async (req, res, next) => {
   try {
     // 1) Getting token and check if it exists
@@ -108,10 +122,10 @@ exports.authenticate = async (req, res, next) => {
   }
 };
 
+// ROLE - Checking permission based on role
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     // roles ['admin', 'lead-guide']
-
     if (!roles.includes(req.user.role)) {
       return next(
         new AppError("You do not have permission to perform this action! ", 403)
