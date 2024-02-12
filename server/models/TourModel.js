@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const slugify = require("slugify");
-const validator = require("validator");
 
 const tourSchema = new mongoose.Schema(
   {
@@ -84,15 +83,54 @@ const tourSchema = new mongoose.Schema(
     startDates: [Date],
     slug: String,
     secretTour: Boolean,
+    startLocation: {
+      //GeoJSON
+      type: {
+        type: String,
+        default: "Point",
+        enum: ["Point"],
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        //GeoJSON
+        type: {
+          type: String,
+          default: "Point",
+          enum: ["Point"],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+      },
+    ],
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
+    // Allowing virtual fields in response
     toJSON: {virtuals: true},
     toObject: {virtuals: true},
   }
 );
 
+// virtual property -> that is not stored in DB
 tourSchema.virtual("durationWeeks").get(function () {
   return this.duration / 7;
+});
+
+//  VIRTUAL POPULATING
+tourSchema.virtual("reviews", {
+  ref: "Review",
+  foreignField: "tour",
+  localField: "_id",
 });
 
 //DOCUMENT MIDDLEWARE: runs only before .save() and .create()
@@ -114,8 +152,11 @@ tourSchema.pre(/^find/, function (next) {
   next();
 });
 
-tourSchema.post(/^find/, function (docs, next) {
-  // console.log(docs);
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "guides",
+    select: "-_v -passwordChangedAt",
+  });
   next();
 });
 

@@ -3,8 +3,8 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 const Tour = require("../../models/TourModel");
 
-dotenv.config({path: "./config.env"});
-console.log("DATABASE======>", process.env);
+dotenv.config({path: "../../config.env"});
+console.log("DATABASE======>", process.env.DATABASE);
 const DB = process.env.DATABASE.replace("<password>", process.env.DB_PASSWORD);
 
 mongoose
@@ -19,7 +19,7 @@ mongoose
 
 // Read JSON file
 
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours-simple.json`));
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`));
 
 // Import Data into DB
 const importData = async () => {
